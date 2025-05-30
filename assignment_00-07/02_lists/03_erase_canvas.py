@@ -1,66 +1,44 @@
-from graphics import Canvas
-import time
+import tkinter as tk
 
-CANVAS_WIDTH: int = 400
-CANVAS_HEIGHT: int = 400
+CANVAS_WIDTH = 400
+CANVAS_HEIGHT = 400
+CELL_SIZE = 40  
 
-CELL_SIZE: int = 40
-ERASER_SIZE: int = 20
+def create_grid(canvas):
+    """ Creates a grid of blue cells on the canvas. """
+    cells = []
+    for row in range(0, CANVAS_HEIGHT, CELL_SIZE):
+        row_cells = []
+        for col in range(0, CANVAS_WIDTH, CELL_SIZE):
+            rect = canvas.create_rectangle(col, row, col + CELL_SIZE, row + CELL_SIZE, fill="blue", outline="black")
+            row_cells.append(rect)
+        cells.append(row_cells)
+    return cells
 
-def erase_objects(canvas, eraser):
-    """🩹 Erase blue cells that are under the eraser by turning them white."""
-    mouse_x = canvas.get_mouse_x()
-    mouse_y = canvas.get_mouse_y()
+def erase(event):
+    """ Changes the color of grid cells under the eraser to white. """
+    x, y = event.x, event.y
+    row = y // CELL_SIZE
+    col = x // CELL_SIZE
 
-    left_x = mouse_x
-    top_y = mouse_y
-    right_x = left_x + ERASER_SIZE
-    bottom_y = top_y + ERASER_SIZE
-
-    overlapping_objects = canvas.find_overlapping(left_x, top_y, right_x, bottom_y)
-
-    for obj in overlapping_objects:
-        if obj != eraser:
-            canvas.set_color(obj, 'white')  # Erase by changing color to white
+    if 0 <= row < len(grid) and 0 <= col < len(grid[0]):
+        canvas.itemconfig(grid[row][col], fill="white") 
 
 def main():
-    canvas = Canvas(CANVAS_WIDTH, CANVAS_HEIGHT)
+    global canvas, grid
 
-    # 🟦 Create grid of blue cells
-    num_rows = CANVAS_HEIGHT // CELL_SIZE
-    num_cols = CANVAS_WIDTH // CELL_SIZE
+    root = tk.Tk()
+    root.title("Eraser on Canvas")
 
-    for row in range(num_rows):
-        for col in range(num_cols):
-            left_x = col * CELL_SIZE
-            top_y = row * CELL_SIZE
-            right_x = left_x + CELL_SIZE
-            bottom_y = top_y + CELL_SIZE
+    canvas = tk.Canvas(root, width=CANVAS_WIDTH, height=CANVAS_HEIGHT, bg="white")
+    canvas.pack()
 
-            canvas.create_rectangle(left_x, top_y, right_x, bottom_y, 'blue')
+    grid = create_grid(canvas)
 
-    canvas.wait_for_click()  # ⏳ Wait for user to click to position eraser
+    canvas.bind("<B1-Motion>", erase)
 
-    last_click_x, last_click_y = canvas.get_last_click()
-
-    # 🎨 Create eraser rectangle (pink)
-    eraser = canvas.create_rectangle(
-        last_click_x,
-        last_click_y,
-        last_click_x + ERASER_SIZE,
-        last_click_y + ERASER_SIZE,
-        'pink'
-    )
-
-    # 🔄 Move eraser with mouse and erase blue cells
-    while True:
-        mouse_x = canvas.get_mouse_x()
-        mouse_y = canvas.get_mouse_y()
-        canvas.moveto(eraser, mouse_x, mouse_y)
-
-        erase_objects(canvas, eraser)
-
-        time.sleep(0.05)  # ⏱️ Small delay for smooth interaction
+ 
+    root.mainloop()
 
 if __name__ == '__main__':
     main()
